@@ -1,7 +1,32 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+
+	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/go-lib-mcp/transport"
+	"github.com/friedenberg/grit/internal/tools"
+)
 
 func main() {
-	fmt.Println("Hello from grit")
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	t := transport.NewStdio(os.Stdin, os.Stdout)
+
+	srv, err := server.New(t, server.Options{
+		ServerName:    "grit",
+		ServerVersion: "0.1.0",
+		Tools:         tools.RegisterAll(),
+	})
+	if err != nil {
+		log.Fatalf("creating server: %v", err)
+	}
+
+	if err := srv.Run(ctx); err != nil {
+		log.Fatalf("server error: %v", err)
+	}
 }

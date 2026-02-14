@@ -34,6 +34,10 @@ deps:
     nix develop --command go mod tidy
     nix develop --command gomod2nix
 
+# Install as Claude Code MCP server
+install-claude: build
+    claude mcp add grit -- ./result/bin/grit
+
 # Clean build artifacts
 clean:
     rm -f grit
