@@ -57,6 +57,14 @@ func registerLogTools(r *server.ToolRegistry) {
 				"ref": {
 					"type": "string",
 					"description": "Ref to show (commit hash, tag, branch, etc.)"
+				},
+				"context_lines": {
+					"type": "integer",
+					"description": "Number of context lines around each change (git --unified=N, default 3)"
+				},
+				"max_patch_lines": {
+					"type": "integer",
+					"description": "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."
 				}
 			},
 			"required": ["repo_path", "ref"]
@@ -140,8 +148,10 @@ func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCall
 
 func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
 	var params struct {
-		RepoPath string `json:"repo_path"`
-		Ref      string `json:"ref"`
+		RepoPath      string `json:"repo_path"`
+		Ref           string `json:"ref"`
+		ContextLines  *int   `json:"context_lines"`
+		MaxPatchLines int    `json:"max_patch_lines"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
@@ -167,12 +177,23 @@ func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		numstatOut = ""
 	}
 
-	patchOut, err := git.Run(ctx, params.RepoPath, "diff", params.Ref+"~1", params.Ref)
+	diffArgs := []string{"diff"}
+	if params.ContextLines != nil {
+		diffArgs = append(diffArgs, fmt.Sprintf("--unified=%d", *params.ContextLines))
+	}
+	diffArgs = append(diffArgs, params.Ref+"~1", params.Ref)
+
+	patchOut, err := git.Run(ctx, params.RepoPath, diffArgs...)
 	if err != nil {
 		patchOut = ""
 	}
 
 	result := git.ParseShow(metadataOut, numstatOut, patchOut)
+
+	patch, truncated, truncatedAt := git.TruncatePatch(result.Patch, params.MaxPatchLines)
+	result.Patch = patch
+	result.Truncated = truncated
+	result.TruncatedAtLine = truncatedAt
 
 	return jsonResult(result)
 }

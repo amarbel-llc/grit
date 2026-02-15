@@ -53,6 +53,14 @@ func registerStatusTools(r *server.ToolRegistry) {
 				"stat_only": {
 					"type": "boolean",
 					"description": "Show only diffstat summary"
+				},
+				"context_lines": {
+					"type": "integer",
+					"description": "Number of context lines around each change (git --unified=N, default 3)"
+				},
+				"max_patch_lines": {
+					"type": "integer",
+					"description": "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."
 				}
 			},
 			"required": ["repo_path"]
@@ -82,11 +90,13 @@ func handleGitStatus(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 
 func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
 	var params struct {
-		RepoPath string   `json:"repo_path"`
-		Staged   bool     `json:"staged"`
-		Ref      string   `json:"ref"`
-		Paths    []string `json:"paths"`
-		StatOnly bool     `json:"stat_only"`
+		RepoPath      string   `json:"repo_path"`
+		Staged        bool     `json:"staged"`
+		Ref           string   `json:"ref"`
+		Paths         []string `json:"paths"`
+		StatOnly      bool     `json:"stat_only"`
+		ContextLines  *int     `json:"context_lines"`
+		MaxPatchLines int      `json:"max_patch_lines"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
@@ -126,6 +136,9 @@ func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 
 	if !params.StatOnly {
 		patchArgs := []string{"diff"}
+		if params.ContextLines != nil {
+			patchArgs = append(patchArgs, fmt.Sprintf("--unified=%d", *params.ContextLines))
+		}
 		if params.Staged {
 			patchArgs = append(patchArgs, "--cached")
 		}
@@ -142,7 +155,10 @@ func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 			return protocol.ErrorResult(fmt.Sprintf("git diff: %v", err)), nil
 		}
 
-		result.Patch = patchOut
+		patch, truncated, truncatedAt := git.TruncatePatch(patchOut, params.MaxPatchLines)
+		result.Patch = patch
+		result.Truncated = truncated
+		result.TruncatedAtLine = truncatedAt
 	}
 
 	return jsonResult(result)
