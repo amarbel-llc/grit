@@ -13,7 +13,7 @@ import (
 func registerLogTools(r *server.ToolRegistry) {
 	r.Register(
 		"git_log",
-		"Show commit history",
+		"Show commit history as structured JSON",
 		json.RawMessage(`{
 			"type": "object",
 			"properties": {
@@ -33,14 +33,6 @@ func registerLogTools(r *server.ToolRegistry) {
 					"type": "array",
 					"items": {"type": "string"},
 					"description": "Limit to commits affecting these paths"
-				},
-				"oneline": {
-					"type": "boolean",
-					"description": "Use condensed one-line format"
-				},
-				"format": {
-					"type": "string",
-					"description": "Custom --format string (overrides oneline)"
 				},
 				"all": {
 					"type": "boolean",
@@ -107,8 +99,6 @@ func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCall
 		MaxCount int      `json:"max_count"`
 		Ref      string   `json:"ref"`
 		Paths    []string `json:"paths"`
-		Oneline  bool     `json:"oneline"`
-		Format   string   `json:"format"`
 		All      bool     `json:"all"`
 	}
 
@@ -123,12 +113,7 @@ func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCall
 		maxCount = 10
 	}
 	gitArgs = append(gitArgs, fmt.Sprintf("--max-count=%d", maxCount))
-
-	if params.Format != "" {
-		gitArgs = append(gitArgs, fmt.Sprintf("--format=%s", params.Format))
-	} else if params.Oneline {
-		gitArgs = append(gitArgs, "--oneline")
-	}
+	gitArgs = append(gitArgs, fmt.Sprintf("--format=%s", git.LogFormat))
 
 	if params.All {
 		gitArgs = append(gitArgs, "--all")
@@ -148,11 +133,9 @@ func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCall
 		return protocol.ErrorResult(fmt.Sprintf("git log: %v", err)), nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	entries := git.ParseLog(out)
+
+	return jsonResult(entries)
 }
 
 func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -165,16 +148,33 @@ func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
-	out, err := git.Run(ctx, params.RepoPath, "show", params.Ref)
+	metadataOut, err := git.Run(ctx, params.RepoPath, "show", "--no-patch", fmt.Sprintf("--format=%s", git.ShowFormat), params.Ref)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git show: %v", err)), nil
+		// Fall back to raw output for non-commit objects (tags, blobs)
+		out, fallbackErr := git.Run(ctx, params.RepoPath, "show", params.Ref)
+		if fallbackErr != nil {
+			return protocol.ErrorResult(fmt.Sprintf("git show: %v", err)), nil
+		}
+		return &protocol.ToolCallResult{
+			Content: []protocol.ContentBlock{
+				protocol.TextContent(out),
+			},
+		}, nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	numstatOut, err := git.Run(ctx, params.RepoPath, "show", "--numstat", "--format=", params.Ref)
+	if err != nil {
+		numstatOut = ""
+	}
+
+	patchOut, err := git.Run(ctx, params.RepoPath, "diff", params.Ref+"~1", params.Ref)
+	if err != nil {
+		patchOut = ""
+	}
+
+	result := git.ParseShow(metadataOut, numstatOut, patchOut)
+
+	return jsonResult(result)
 }
 
 func handleGitBlame(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -189,7 +189,7 @@ func handleGitBlame(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
-	gitArgs := []string{"blame"}
+	gitArgs := []string{"blame", "--porcelain"}
 
 	if params.LineRange != "" {
 		gitArgs = append(gitArgs, fmt.Sprintf("-L%s", params.LineRange))
@@ -206,9 +206,7 @@ func handleGitBlame(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 		return protocol.ErrorResult(fmt.Sprintf("git blame: %v", err)), nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	lines := git.ParseBlame(out)
+
+	return jsonResult(lines)
 }

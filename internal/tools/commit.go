@@ -47,9 +47,7 @@ func handleGitCommit(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 		return protocol.ErrorResult(fmt.Sprintf("git commit: %v", err)), nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	result := git.ParseCommit(out)
+
+	return jsonResult(result)
 }

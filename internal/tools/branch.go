@@ -95,7 +95,10 @@ func handleGitBranchList(ctx context.Context, args json.RawMessage) (*protocol.T
 		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
-	gitArgs := []string{"branch", "-v"}
+	gitArgs := []string{
+		"branch",
+		"--format=%(HEAD)\x00%(refname:short)\x00%(objectname:short)\x00%(subject)\x00%(upstream:short)\x00%(upstream:track)\x1e",
+	}
 
 	if params.All {
 		gitArgs = append(gitArgs, "-a")
@@ -108,11 +111,9 @@ func handleGitBranchList(ctx context.Context, args json.RawMessage) (*protocol.T
 		return protocol.ErrorResult(fmt.Sprintf("git branch: %v", err)), nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	branches := git.ParseBranchList(out)
+
+	return jsonResult(branches)
 }
 
 func handleGitBranchCreate(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -132,20 +133,15 @@ func handleGitBranchCreate(ctx context.Context, args json.RawMessage) (*protocol
 		gitArgs = append(gitArgs, params.StartPoint)
 	}
 
-	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
-	if err != nil {
+	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
 		return protocol.ErrorResult(fmt.Sprintf("git branch create: %v", err)), nil
 	}
 
-	if out == "" {
-		out = fmt.Sprintf("branch '%s' created", params.Name)
-	}
-
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	return jsonResult(git.MutationResult{
+		Status:     "created",
+		Name:       params.Name,
+		StartPoint: params.StartPoint,
+	})
 }
 
 func handleGitCheckout(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -167,18 +163,13 @@ func handleGitCheckout(ctx context.Context, args json.RawMessage) (*protocol.Too
 
 	gitArgs = append(gitArgs, params.Ref)
 
-	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
-	if err != nil {
+	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
 		return protocol.ErrorResult(fmt.Sprintf("git checkout: %v", err)), nil
 	}
 
-	if out == "" {
-		out = fmt.Sprintf("switched to branch '%s'", params.Ref)
-	}
-
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	return jsonResult(git.MutationResult{
+		Status: "switched",
+		Ref:    params.Ref,
+		Create: params.Create,
+	})
 }

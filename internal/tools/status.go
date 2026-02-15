@@ -75,11 +75,9 @@ func handleGitStatus(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 		return protocol.ErrorResult(fmt.Sprintf("git status: %v", err)), nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	result := git.ParseStatus(out)
+
+	return jsonResult(result)
 }
 
 func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -95,33 +93,57 @@ func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
-	gitArgs := []string{"diff"}
-
+	numstatArgs := []string{"diff", "--numstat"}
 	if params.Staged {
-		gitArgs = append(gitArgs, "--cached")
+		numstatArgs = append(numstatArgs, "--cached")
 	}
-
-	if params.StatOnly {
-		gitArgs = append(gitArgs, "--stat")
-	}
-
 	if params.Ref != "" {
-		gitArgs = append(gitArgs, params.Ref)
+		numstatArgs = append(numstatArgs, params.Ref)
 	}
-
 	if len(params.Paths) > 0 {
-		gitArgs = append(gitArgs, "--")
-		gitArgs = append(gitArgs, params.Paths...)
+		numstatArgs = append(numstatArgs, "--")
+		numstatArgs = append(numstatArgs, params.Paths...)
 	}
 
-	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
+	numstatOut, err := git.Run(ctx, params.RepoPath, numstatArgs...)
 	if err != nil {
 		return protocol.ErrorResult(fmt.Sprintf("git diff: %v", err)), nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	stats := git.ParseDiffNumstat(numstatOut)
+
+	var summary git.DiffSummary
+	summary.TotalFiles = len(stats)
+	for _, s := range stats {
+		summary.TotalAdditions += s.Additions
+		summary.TotalDeletions += s.Deletions
+	}
+
+	result := git.DiffResult{
+		Stats:   stats,
+		Summary: summary,
+	}
+
+	if !params.StatOnly {
+		patchArgs := []string{"diff"}
+		if params.Staged {
+			patchArgs = append(patchArgs, "--cached")
+		}
+		if params.Ref != "" {
+			patchArgs = append(patchArgs, params.Ref)
+		}
+		if len(params.Paths) > 0 {
+			patchArgs = append(patchArgs, "--")
+			patchArgs = append(patchArgs, params.Paths...)
+		}
+
+		patchOut, err := git.Run(ctx, params.RepoPath, patchArgs...)
+		if err != nil {
+			return protocol.ErrorResult(fmt.Sprintf("git diff: %v", err)), nil
+		}
+
+		result.Patch = patchOut
+	}
+
+	return jsonResult(result)
 }

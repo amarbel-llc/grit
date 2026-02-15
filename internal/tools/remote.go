@@ -141,20 +141,21 @@ func handleGitFetch(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 		gitArgs = append(gitArgs, params.Remote)
 	}
 
-	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
-	if err != nil {
+	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
 		return protocol.ErrorResult(fmt.Sprintf("git fetch: %v", err)), nil
 	}
 
-	if out == "" {
-		out = "fetch completed"
+	remote := params.Remote
+	if remote == "" && !params.All {
+		remote = "origin"
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	return jsonResult(git.MutationResult{
+		Status: "fetched",
+		Remote: remote,
+		All:    params.All,
+		Prune:  params.Prune,
+	})
 }
 
 func handleGitPull(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -188,11 +189,17 @@ func handleGitPull(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		return protocol.ErrorResult(fmt.Sprintf("git pull: %v", err)), nil
 	}
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	result := git.PullResult{
+		Status:  "pulled",
+		Summary: strings.TrimSpace(out),
+	}
+
+	if strings.Contains(out, "Already up to date") {
+		result.Status = "already_up_to_date"
+		result.Summary = ""
+	}
+
+	return jsonResult(result)
 }
 
 func handleGitPush(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -241,20 +248,17 @@ func handleGitPush(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		gitArgs = append(gitArgs, params.Branch)
 	}
 
-	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
-	if err != nil {
+	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
 		return protocol.ErrorResult(fmt.Sprintf("git push: %v", err)), nil
 	}
 
-	if out == "" {
-		out = "push completed"
-	}
-
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	return jsonResult(git.MutationResult{
+		Status:      "pushed",
+		Remote:      params.Remote,
+		Branch:      params.Branch,
+		SetUpstream: params.SetUpstream,
+		Force:       params.Force,
+	})
 }
 
 func handleGitRemoteList(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -271,13 +275,7 @@ func handleGitRemoteList(ctx context.Context, args json.RawMessage) (*protocol.T
 		return protocol.ErrorResult(fmt.Sprintf("git remote: %v", err)), nil
 	}
 
-	if out == "" {
-		out = "no remotes configured"
-	}
+	remotes := git.ParseRemoteList(out)
 
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	return jsonResult(remotes)
 }

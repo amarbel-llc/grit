@@ -67,20 +67,14 @@ func handleGitAdd(ctx context.Context, args json.RawMessage) (*protocol.ToolCall
 	gitArgs := []string{"add", "--"}
 	gitArgs = append(gitArgs, params.Paths...)
 
-	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
-	if err != nil {
+	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
 		return protocol.ErrorResult(fmt.Sprintf("git add: %v", err)), nil
 	}
 
-	if out == "" {
-		out = "files staged successfully"
-	}
-
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	return jsonResult(git.MutationResult{
+		Status: "staged",
+		Paths:  params.Paths,
+	})
 }
 
 func handleGitReset(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
@@ -96,18 +90,12 @@ func handleGitReset(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 	gitArgs := []string{"reset", "HEAD", "--"}
 	gitArgs = append(gitArgs, params.Paths...)
 
-	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
-	if err != nil {
+	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
 		return protocol.ErrorResult(fmt.Sprintf("git reset: %v", err)), nil
 	}
 
-	if out == "" {
-		out = "files unstaged successfully"
-	}
-
-	return &protocol.ToolCallResult{
-		Content: []protocol.ContentBlock{
-			protocol.TextContent(out),
-		},
-	}, nil
+	return jsonResult(git.MutationResult{
+		Status: "unstaged",
+		Paths:  params.Paths,
+	})
 }
