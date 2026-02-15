@@ -101,8 +101,8 @@ func ParseBlame(output string) []BlameLine {
 		finalLine, _ := strconv.Atoi(headerParts[2])
 
 		entry := BlameLine{
-			Hash:     hash,
-			OrigLine: origLine,
+			Hash:      hash,
+			OrigLine:  origLine,
 			FinalLine: finalLine,
 		}
 

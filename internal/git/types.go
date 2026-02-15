@@ -33,20 +33,20 @@ type DiffSummary struct {
 }
 
 type DiffResult struct {
-	Stats          []DiffStat  `json:"stats"`
-	Summary        DiffSummary `json:"summary"`
-	Patch          string      `json:"patch,omitempty"`
-	Truncated      bool        `json:"truncated,omitempty"`
-	TruncatedAtLine int        `json:"truncated_at_line,omitempty"`
+	Stats           []DiffStat  `json:"stats"`
+	Summary         DiffSummary `json:"summary"`
+	Patch           string      `json:"patch,omitempty"`
+	Truncated       bool        `json:"truncated,omitempty"`
+	TruncatedAtLine int         `json:"truncated_at_line,omitempty"`
 }
 
 type LogEntry struct {
-	Hash       string `json:"hash"`
-	AuthorName string `json:"author_name"`
+	Hash        string `json:"hash"`
+	AuthorName  string `json:"author_name"`
 	AuthorEmail string `json:"author_email"`
-	AuthorDate string `json:"author_date"`
-	Subject    string `json:"subject"`
-	Body       string `json:"body,omitempty"`
+	AuthorDate  string `json:"author_date"`
+	Subject     string `json:"subject"`
+	Body        string `json:"body,omitempty"`
 }
 
 type ShowResult struct {

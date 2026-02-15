@@ -10,8 +10,8 @@ import (
 
 	"github.com/amarbel-llc/go-lib-mcp/server"
 	"github.com/amarbel-llc/go-lib-mcp/transport"
-	"github.com/friedenberg/grit/internal/tools"
 	"github.com/amarbel-llc/purse-first/purse"
+	"github.com/friedenberg/grit/internal/tools"
 )
 
 func main() {
@@ -28,13 +28,40 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() == 2 && flag.Arg(0) == "generate-plugin" {
-		p := purse.NewPluginBuilder("grit").
+		b := purse.NewPluginBuilder("grit").
 			Command("grit").
 			StdioTransport().
-			Build()
+			Mapping("Bash").
+			CommandPrefixes("git ").
+			Tool("status", "checking repository status").
+			Tool("diff", "viewing changes").
+			Tool("log", "viewing commit history").
+			Tool("show", "inspecting commits or objects").
+			Tool("blame", "viewing line-by-line authorship").
+			Tool("add", "staging files for commit").
+			Tool("reset", "unstaging files").
+			Tool("commit", "creating a new commit").
+			Tool("branch_list", "listing branches").
+			Tool("branch_create", "creating a new branch").
+			Tool("checkout", "switching branches").
+			Tool("fetch", "fetching from a remote").
+			Tool("pull", "pulling changes from a remote").
+			Tool("push", "pushing commits to a remote").
+			Tool("remote_list", "listing remotes").
+			Reason("Use grit MCP tools for git operations instead of shelling out").
+			Done()
 
-		if err := purse.WritePlugin(flag.Arg(1), p); err != nil {
+		p := b.Build()
+		dir := flag.Arg(1)
+
+		if err := purse.WritePlugin(dir, p); err != nil {
 			log.Fatalf("generating plugin: %v", err)
+		}
+
+		if mf := b.BuildMappings(); mf != nil {
+			if err := purse.WriteMappings(dir, p.Name, mf); err != nil {
+				log.Fatalf("generating mappings: %v", err)
+			}
 		}
 
 		return
