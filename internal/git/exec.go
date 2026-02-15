@@ -5,9 +5,20 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 func Run(ctx context.Context, dir string, args ...string) (string, error) {
+	if strings.ContainsRune(dir, 0) {
+		return "", fmt.Errorf("dir contains null byte")
+	}
+
+	for _, arg := range args {
+		if strings.ContainsRune(arg, 0) {
+			return "", fmt.Errorf("argument contains null byte")
+		}
+	}
+
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = dir
 
