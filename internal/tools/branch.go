@@ -12,7 +12,7 @@ import (
 
 func registerBranchTools(r *server.ToolRegistry) {
 	r.Register(
-		"git_branch_list",
+		"branch_list",
 		"List branches",
 		json.RawMessage(`{
 			"type": "object",
@@ -97,7 +97,7 @@ func handleGitBranchList(ctx context.Context, args json.RawMessage) (*protocol.T
 
 	gitArgs := []string{
 		"branch",
-		"--format=%(HEAD)\x00%(refname:short)\x00%(objectname:short)\x00%(subject)\x00%(upstream:short)\x00%(upstream:track)\x1e",
+		"--format=%(HEAD)\x1f%(refname:short)\x1f%(objectname:short)\x1f%(subject)\x1f%(upstream:short)\x1f%(upstream:track)\x1e",
 	}
 
 	if params.All {

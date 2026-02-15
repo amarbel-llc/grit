@@ -5,7 +5,7 @@ import (
 )
 
 func TestParseBranchList(t *testing.T) {
-	input := "*\x00main\x00abc1234\x00Initial commit\x00origin/main\x00[ahead 1]\x1e \x00feature\x00def5678\x00Add feature\x00\x00\x1e"
+	input := "*\x1fmain\x1fabc1234\x1fInitial commit\x1forigin/main\x1f[ahead 1]\x1e \x1ffeature\x1fdef5678\x1fAdd feature\x1f\x1f\x1e"
 
 	branches := ParseBranchList(input)
 
