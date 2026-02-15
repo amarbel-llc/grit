@@ -5,7 +5,7 @@ import (
 )
 
 func TestParseLog(t *testing.T) {
-	input := "abc123def456\x00John Doe\x00john@example.com\x002024-01-15T10:30:00-05:00\x00Initial commit\x00This is the body\x1edef789abc123\x00Jane Smith\x00jane@example.com\x002024-01-14T09:00:00-05:00\x00Add feature\x00\x1e"
+	input := "abc123def456\x1fJohn Doe\x1fjohn@example.com\x1f2024-01-15T10:30:00-05:00\x1fInitial commit\x1fThis is the body\x1edef789abc123\x1fJane Smith\x1fjane@example.com\x1f2024-01-14T09:00:00-05:00\x1fAdd feature\x1f\x1e"
 
 	entries := ParseLog(input)
 
@@ -55,7 +55,7 @@ func TestParseLogEmpty(t *testing.T) {
 }
 
 func TestParseShow(t *testing.T) {
-	metadata := "abc123\x00John Doe\x00john@example.com\x002024-01-15T10:30:00-05:00\x00Fix bug\x00Detailed fix\x1e"
+	metadata := "abc123\x1fJohn Doe\x1fjohn@example.com\x1f2024-01-15T10:30:00-05:00\x1fFix bug\x1fDetailed fix\x1e"
 	numstat := "5\t2\tfile.go\n1\t0\tREADME.md\n"
 	patch := "diff --git a/file.go b/file.go\n--- a/file.go\n+++ b/file.go\n"
 

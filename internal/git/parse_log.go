@@ -6,7 +6,7 @@ import (
 )
 
 const logRecordSep = "\x1e"
-const logFieldSep = "\x00"
+const logFieldSep = "\x1f"
 
 const LogFormat = "%H" + logFieldSep + "%an" + logFieldSep + "%ae" + logFieldSep + "%aI" + logFieldSep + "%s" + logFieldSep + "%b" + logRecordSep
 
