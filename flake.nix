@@ -37,6 +37,11 @@
           modules = ./gomod2nix.toml;
           subPackages = [ "cmd/grit" ];
 
+          postInstall = ''
+            mkdir -p $out/share/purse-first/grit
+            cp ${./plugin.json} $out/share/purse-first/grit/plugin.json
+          '';
+
           meta = with pkgs.lib; {
             description = "MCP for git, wow that's grit";
             homepage = "https://github.com/friedenberg/grit";
