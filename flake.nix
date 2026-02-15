@@ -38,8 +38,7 @@
           subPackages = [ "cmd/grit" ];
 
           postInstall = ''
-            mkdir -p $out/share/purse-first/grit
-            cp ${./plugin.json} $out/share/purse-first/grit/plugin.json
+            $out/bin/grit generate-plugin $out/share/purse-first
           '';
 
           meta = with pkgs.lib; {

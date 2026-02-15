@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/amarbel-llc/go-lib-mcp/purse"
 	"github.com/amarbel-llc/go-lib-mcp/server"
 	"github.com/amarbel-llc/go-lib-mcp/transport"
 	"github.com/friedenberg/grit/internal/tools"
@@ -25,6 +26,19 @@ func main() {
 	}
 
 	flag.Parse()
+
+	if flag.NArg() == 2 && flag.Arg(0) == "generate-plugin" {
+		p := purse.NewPluginBuilder("grit").
+			Command("grit").
+			StdioTransport().
+			Build()
+
+		if err := purse.WritePlugin(flag.Arg(1), p); err != nil {
+			log.Fatalf("generating plugin: %v", err)
+		}
+
+		return
+	}
 
 	if flag.NArg() > 0 {
 		fmt.Fprintf(os.Stderr, "grit: unexpected arguments: %v\n", flag.Args())
