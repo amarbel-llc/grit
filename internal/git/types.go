@@ -88,6 +88,11 @@ type RemoteEntry struct {
 	PushURL  string `json:"push_url"`
 }
 
+type RevParseResult struct {
+	Resolved string `json:"resolved"`
+	Ref      string `json:"ref"`
+}
+
 type CommitResult struct {
 	Status  string `json:"status"`
 	Branch  string `json:"branch"`
