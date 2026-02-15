@@ -12,7 +12,7 @@ import (
 
 func registerCommitTools(r *server.ToolRegistry) {
 	r.Register(
-		"git_commit",
+		"commit",
 		"Create a new commit with staged changes",
 		json.RawMessage(`{
 			"type": "object",

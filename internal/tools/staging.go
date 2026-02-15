@@ -12,7 +12,7 @@ import (
 
 func registerStagingTools(r *server.ToolRegistry) {
 	r.Register(
-		"git_add",
+		"add",
 		"Stage files for commit",
 		json.RawMessage(`{
 			"type": "object",
@@ -33,7 +33,7 @@ func registerStagingTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_reset",
+		"reset",
 		"Unstage files (soft reset only, does not modify working tree)",
 		json.RawMessage(`{
 			"type": "object",

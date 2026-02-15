@@ -13,7 +13,7 @@ import (
 
 func registerRemoteTools(r *server.ToolRegistry) {
 	r.Register(
-		"git_fetch",
+		"fetch",
 		"Fetch from a remote repository",
 		json.RawMessage(`{
 			"type": "object",
@@ -41,7 +41,7 @@ func registerRemoteTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_pull",
+		"pull",
 		"Pull changes from a remote repository",
 		json.RawMessage(`{
 			"type": "object",
@@ -69,7 +69,7 @@ func registerRemoteTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_push",
+		"push",
 		"Push commits to a remote repository (force push blocked on main/master)",
 		json.RawMessage(`{
 			"type": "object",
@@ -101,7 +101,7 @@ func registerRemoteTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_remote_list",
+		"remote_list",
 		"List remotes with their URLs",
 		json.RawMessage(`{
 			"type": "object",

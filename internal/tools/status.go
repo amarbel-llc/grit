@@ -12,7 +12,7 @@ import (
 
 func registerStatusTools(r *server.ToolRegistry) {
 	r.Register(
-		"git_status",
+		"status",
 		"Show working tree status with machine-readable output",
 		json.RawMessage(`{
 			"type": "object",
@@ -28,7 +28,7 @@ func registerStatusTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_diff",
+		"diff",
 		"Show changes in the working tree or between commits",
 		json.RawMessage(`{
 			"type": "object",

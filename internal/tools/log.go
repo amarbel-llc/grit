@@ -12,7 +12,7 @@ import (
 
 func registerLogTools(r *server.ToolRegistry) {
 	r.Register(
-		"git_log",
+		"log",
 		"Show commit history as structured JSON",
 		json.RawMessage(`{
 			"type": "object",
@@ -45,7 +45,7 @@ func registerLogTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_show",
+		"show",
 		"Show a commit, tag, or other git object",
 		json.RawMessage(`{
 			"type": "object",
@@ -73,7 +73,7 @@ func registerLogTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_blame",
+		"blame",
 		"Show line-by-line authorship of a file",
 		json.RawMessage(`{
 			"type": "object",

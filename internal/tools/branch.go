@@ -36,7 +36,7 @@ func registerBranchTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_branch_create",
+		"branch_create",
 		"Create a new branch",
 		json.RawMessage(`{
 			"type": "object",
@@ -60,7 +60,7 @@ func registerBranchTools(r *server.ToolRegistry) {
 	)
 
 	r.Register(
-		"git_checkout",
+		"checkout",
 		"Switch branches or restore working tree files",
 		json.RawMessage(`{
 			"type": "object",
