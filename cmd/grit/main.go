@@ -35,9 +35,87 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() == 2 && flag.Arg(0) == "generate-plugin" {
+		reason := "Use the grit MCP tool instead of shelling out. When the command uses git -C <path>, pass that path as the repo_path parameter"
+
 		b := purse.NewPluginBuilder("grit").
 			Command("grit").
 			StdioTransport().
+			Mapping("Bash").
+			CommandPrefixes("git status").
+			Tool("status", "checking repository status").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git diff").
+			Tool("diff", "viewing changes").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git log").
+			Tool("log", "viewing commit history").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git show").
+			Tool("show", "inspecting commits or objects").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git blame").
+			Tool("blame", "viewing line-by-line authorship").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git add").
+			Tool("add", "staging files for commit").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git reset").
+			Tool("reset", "unstaging files").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git commit").
+			Tool("commit", "creating a new commit").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git branch").
+			Tool("branch_list", "listing branches").
+			Tool("branch_create", "creating a new branch").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git checkout", "git switch").
+			Tool("checkout", "switching branches").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git fetch").
+			Tool("fetch", "fetching from a remote").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git pull").
+			Tool("pull", "pulling changes from a remote").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git push").
+			Tool("push", "pushing commits to a remote").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git remote").
+			Tool("remote_list", "listing remotes").
+			Reason(reason).
+			Done().
+			Mapping("Bash").
+			CommandPrefixes("git rev-parse").
+			Tool("git_rev_parse", "resolving a git revision to its full SHA").
+			Reason(reason).
+			Done().
 			Mapping("Bash").
 			CommandPrefixes("git ", "git -C ").
 			Tool("status", "checking repository status").
