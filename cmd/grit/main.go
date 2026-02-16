@@ -39,7 +39,7 @@ func main() {
 			Command("grit").
 			StdioTransport().
 			Mapping("Bash").
-			CommandPrefixes("git ").
+			CommandPrefixes("git ", "git -C ").
 			Tool("status", "checking repository status").
 			Tool("diff", "viewing changes").
 			Tool("log", "viewing commit history").
@@ -55,7 +55,8 @@ func main() {
 			Tool("pull", "pulling changes from a remote").
 			Tool("push", "pushing commits to a remote").
 			Tool("remote_list", "listing remotes").
-			Reason("Use grit MCP tools for git operations instead of shelling out").
+			Tool("git_rev_parse", "resolving a git revision to its full SHA").
+			Reason("Use grit MCP tools for git operations instead of shelling out. When the command uses git -C <path>, pass that path as the repo_path parameter").
 			Done()
 
 		p := b.Build()
