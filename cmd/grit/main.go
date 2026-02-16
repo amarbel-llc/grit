@@ -12,17 +12,24 @@ import (
 	"github.com/amarbel-llc/go-lib-mcp/transport"
 	"github.com/amarbel-llc/purse-first/purse"
 	"github.com/friedenberg/grit/internal/tools"
+	intTransport "github.com/friedenberg/grit/internal/transport"
 )
 
 func main() {
+	sseMode := flag.Bool("sse", false, "Use HTTP/SSE transport instead of stdio")
+	port := flag.Int("port", 8080, "Port for HTTP/SSE transport")
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "grit — an MCP server exposing git operations\n\n")
 		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  grit\n\n")
-		fmt.Fprintf(os.Stderr, "Starts an MCP server on stdio (JSON-RPC over stdin/stdout).\n")
+		fmt.Fprintf(os.Stderr, "  grit [flags]\n\n")
+		fmt.Fprintf(os.Stderr, "Starts an MCP server on stdio (default) or HTTP/SSE.\n")
 		fmt.Fprintf(os.Stderr, "Intended to be launched by an MCP client such as Claude Code.\n\n")
-		fmt.Fprintf(os.Stderr, "Example:\n")
-		fmt.Fprintf(os.Stderr, "  claude mcp add grit -- grit\n")
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nExamples:\n")
+		fmt.Fprintf(os.Stderr, "  grit                     # stdio transport\n")
+		fmt.Fprintf(os.Stderr, "  grit --sse --port 8080   # HTTP/SSE transport\n")
 	}
 
 	flag.Parse()
@@ -76,7 +83,19 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	t := transport.NewStdio(os.Stdin, os.Stdout)
+	var t transport.Transport
+
+	if *sseMode {
+		sse := intTransport.NewSSE(fmt.Sprintf(":%d", *port))
+		if err := sse.Start(ctx); err != nil {
+			log.Fatalf("starting SSE transport: %v", err)
+		}
+		defer sse.Close()
+		log.Printf("SSE transport listening on %s", sse.Addr())
+		t = sse
+	} else {
+		t = transport.NewStdio(os.Stdin, os.Stdout)
+	}
 
 	srv, err := server.New(t, server.Options{
 		ServerName:    "grit",
