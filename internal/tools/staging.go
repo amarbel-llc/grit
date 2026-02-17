@@ -5,53 +5,37 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/amarbel-llc/go-lib-mcp/protocol"
-	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
-func registerStagingTools(r *server.ToolRegistry) {
-	r.Register(
-		"add",
-		"Stage files for commit",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"paths": {
-					"type": "array",
-					"items": {"type": "string"},
-					"description": "File paths to stage (relative to repo root)"
-				}
-			},
-			"required": ["repo_path", "paths"]
-		}`),
-		handleGitAdd,
-	)
+func registerStagingCommands(app *command.App) {
+	app.AddCommand(&command.Command{
+		Name:        "add",
+		Description: "Stage files for commit",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "paths", Type: command.Array, Description: "File paths to stage (relative to repo root)", Required: true},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git add"}, UseWhen: "staging files for commit"},
+		},
+		RunMCP: handleGitAdd,
+	})
 
-	r.Register(
-		"reset",
-		"Unstage files (soft reset only, does not modify working tree)",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"paths": {
-					"type": "array",
-					"items": {"type": "string"},
-					"description": "File paths to unstage (relative to repo root)"
-				}
-			},
-			"required": ["repo_path", "paths"]
-		}`),
-		handleGitReset,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "reset",
+		Description: "Unstage files (soft reset only, does not modify working tree)",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "paths", Type: command.Array, Description: "File paths to unstage (relative to repo root)", Required: true},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git reset"}, UseWhen: "unstaging files"},
+		},
+		RunMCP: handleGitReset,
+	})
 }
 
 func handleGitAdd(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
