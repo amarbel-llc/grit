@@ -119,3 +119,12 @@ type MutationResult struct {
 	All         bool     `json:"all,omitempty"`
 	Prune       bool     `json:"prune,omitempty"`
 }
+
+type RebaseResult struct {
+	Status      string   `json:"status"`
+	Branch      string   `json:"branch,omitempty"`
+	Upstream    string   `json:"upstream,omitempty"`
+	Conflicts   []string `json:"conflicts,omitempty"`
+	CurrentStep string   `json:"current_step,omitempty"`
+	Summary     string   `json:"summary,omitempty"`
+}

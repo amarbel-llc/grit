@@ -12,6 +12,7 @@ func RegisterAll() *server.ToolRegistry {
 	registerBranchTools(r)
 	registerRemoteTools(r)
 	registerRevParseTools(r)
+	registerRebaseTools(r)
 
 	return r
 }
