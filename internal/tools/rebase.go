@@ -14,7 +14,7 @@ import (
 func registerRebaseCommands(app *command.App) {
 	app.AddCommand(&command.Command{
 		Name:        "rebase",
-		Description: "Rebase current branch onto another ref (blocked on main/master for safety)",
+		Description: command.Description{Short: "Rebase current branch onto another ref (blocked on main/master for safety)"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "upstream", Type: command.String, Description: "Ref to rebase onto (branch, tag, commit)"},

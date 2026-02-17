@@ -14,7 +14,7 @@ import (
 func registerRemoteCommands(app *command.App) {
 	app.AddCommand(&command.Command{
 		Name:        "fetch",
-		Description: "Fetch from a remote repository",
+		Description: command.Description{Short: "Fetch from a remote repository"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "remote", Type: command.String, Description: "Remote name (default origin)"},
@@ -29,7 +29,7 @@ func registerRemoteCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "pull",
-		Description: "Pull changes from a remote repository",
+		Description: command.Description{Short: "Pull changes from a remote repository"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "remote", Type: command.String, Description: "Remote name (default origin)"},
@@ -44,7 +44,7 @@ func registerRemoteCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "push",
-		Description: "Push commits to a remote repository (force push blocked on main/master)",
+		Description: command.Description{Short: "Push commits to a remote repository (force push blocked on main/master)"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "remote", Type: command.String, Description: "Remote name (default origin)"},
@@ -60,7 +60,7 @@ func registerRemoteCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "remote_list",
-		Description: "List remotes with their URLs",
+		Description: command.Description{Short: "List remotes with their URLs"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 		},

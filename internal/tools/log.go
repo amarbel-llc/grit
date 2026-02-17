@@ -13,7 +13,7 @@ import (
 func registerLogCommands(app *command.App) {
 	app.AddCommand(&command.Command{
 		Name:        "log",
-		Description: "Show commit history as structured JSON",
+		Description: command.Description{Short: "Show commit history as structured JSON"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "max_count", Type: command.Int, Description: "Maximum number of commits to show (default 10)"},
@@ -29,7 +29,7 @@ func registerLogCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "show",
-		Description: "Show a commit, tag, or other git object",
+		Description: command.Description{Short: "Show a commit, tag, or other git object"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "ref", Type: command.String, Description: "Ref to show (commit hash, tag, branch, etc.)", Required: true},
@@ -44,7 +44,7 @@ func registerLogCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "blame",
-		Description: "Show line-by-line authorship of a file",
+		Description: command.Description{Short: "Show line-by-line authorship of a file"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "path", Type: command.String, Description: "File path to blame (relative to repo root)", Required: true},

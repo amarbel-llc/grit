@@ -13,7 +13,7 @@ import (
 func registerStatusCommands(app *command.App) {
 	app.AddCommand(&command.Command{
 		Name:        "status",
-		Description: "Show working tree status with machine-readable output",
+		Description: command.Description{Short: "Show working tree status with machine-readable output"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 		},
@@ -25,7 +25,7 @@ func registerStatusCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "diff",
-		Description: "Show changes in the working tree or between commits",
+		Description: command.Description{Short: "Show changes in the working tree or between commits"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "staged", Type: command.Bool, Description: "Show staged changes (--cached)"},

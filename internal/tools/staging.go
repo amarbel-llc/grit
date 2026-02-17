@@ -13,7 +13,7 @@ import (
 func registerStagingCommands(app *command.App) {
 	app.AddCommand(&command.Command{
 		Name:        "add",
-		Description: "Stage files for commit",
+		Description: command.Description{Short: "Stage files for commit"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "paths", Type: command.Array, Description: "File paths to stage (relative to repo root)", Required: true},
@@ -26,7 +26,7 @@ func registerStagingCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "reset",
-		Description: "Unstage files (soft reset only, does not modify working tree)",
+		Description: command.Description{Short: "Unstage files (soft reset only, does not modify working tree)"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "paths", Type: command.Array, Description: "File paths to unstage (relative to repo root)", Required: true},

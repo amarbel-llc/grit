@@ -13,7 +13,7 @@ import (
 func registerBranchCommands(app *command.App) {
 	app.AddCommand(&command.Command{
 		Name:        "branch_list",
-		Description: "List branches",
+		Description: command.Description{Short: "List branches"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "remote", Type: command.Bool, Description: "List remote-tracking branches"},
@@ -27,7 +27,7 @@ func registerBranchCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "branch_create",
-		Description: "Create a new branch",
+		Description: command.Description{Short: "Create a new branch"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "name", Type: command.String, Description: "Name for the new branch", Required: true},
@@ -38,7 +38,7 @@ func registerBranchCommands(app *command.App) {
 
 	app.AddCommand(&command.Command{
 		Name:        "checkout",
-		Description: "Switch branches or restore working tree files",
+		Description: command.Description{Short: "Switch branches or restore working tree files"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "ref", Type: command.String, Description: "Branch name or ref to check out", Required: true},

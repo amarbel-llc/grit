@@ -13,7 +13,7 @@ import (
 func registerCommitCommands(app *command.App) {
 	app.AddCommand(&command.Command{
 		Name:        "commit",
-		Description: "Create a new commit with staged changes",
+		Description: command.Description{Short: "Create a new commit with staged changes"},
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "message", Type: command.String, Description: "Commit message", Required: true},

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amarbel-llc/go-lib-mcp/jsonrpc"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/jsonrpc"
 	intTransport "github.com/friedenberg/grit/internal/transport"
 )
 

@@ -1,6 +1,2 @@
-github.com/amarbel-llc/go-lib-mcp v0.0.0-20260215160001-e634f96c4717 h1:fE//F+ip/U72P6tFm9eofPvmPRqZZF2apSrQK3Eapr4=
-github.com/amarbel-llc/go-lib-mcp v0.0.0-20260215160001-e634f96c4717/go.mod h1:WeBhnp8sRqy+s9jbWBLPeLzKK18CszNn6f2L9PQab0U=
-github.com/amarbel-llc/purse-first v0.0.0-20260215231605-c80c31bd93b5 h1:Qc7uoHlw2yD27XaNjs9Eh6UmB63GCwmZtUFzAG4xzlI=
-github.com/amarbel-llc/purse-first v0.0.0-20260215231605-c80c31bd93b5/go.mod h1:3bzgBua0Rgpil4yMiUmIn+a6r3Y4Ub5Tse5n8aow+UU=
 github.com/amarbel-llc/purse-first/libs/go-mcp v0.0.0-20260217222858-cd512e5ef8b7 h1:kKHIeKhX42a9Vy7a1K6Z0zDugBHNQLOfgx4WexFbnSg=
 github.com/amarbel-llc/purse-first/libs/go-mcp v0.0.0-20260217222858-cd512e5ef8b7/go.mod h1:Bp6M8JyQdYdMV7MMhXYOSoF5KO/nRgyXcgz2F9NNksA=
