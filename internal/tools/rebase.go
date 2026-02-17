@@ -6,51 +6,29 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amarbel-llc/go-lib-mcp/protocol"
-	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
-func registerRebaseTools(r *server.ToolRegistry) {
-	r.Register(
-		"rebase",
-		"Rebase current branch onto another ref (blocked on main/master for safety)",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"upstream": {
-					"type": "string",
-					"description": "Ref to rebase onto (branch, tag, commit)"
-				},
-				"branch": {
-					"type": "string",
-					"description": "Branch to rebase (defaults to current branch)"
-				},
-				"autostash": {
-					"type": "boolean",
-					"description": "Automatically stash/unstash uncommitted changes"
-				},
-				"continue": {
-					"type": "boolean",
-					"description": "Continue rebase after resolving conflicts"
-				},
-				"abort": {
-					"type": "boolean",
-					"description": "Abort current rebase operation"
-				},
-				"skip": {
-					"type": "boolean",
-					"description": "Skip current commit and continue rebase"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitRebase,
-	)
+func registerRebaseCommands(app *command.App) {
+	app.AddCommand(&command.Command{
+		Name:        "rebase",
+		Description: "Rebase current branch onto another ref (blocked on main/master for safety)",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "upstream", Type: command.String, Description: "Ref to rebase onto (branch, tag, commit)"},
+			{Name: "branch", Type: command.String, Description: "Branch to rebase (defaults to current branch)"},
+			{Name: "autostash", Type: command.Bool, Description: "Automatically stash/unstash uncommitted changes"},
+			{Name: "continue", Type: command.Bool, Description: "Continue rebase after resolving conflicts"},
+			{Name: "abort", Type: command.Bool, Description: "Abort current rebase operation"},
+			{Name: "skip", Type: command.Bool, Description: "Skip current commit and continue rebase"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git rebase"}, UseWhen: "rebasing a branch"},
+		},
+		RunMCP: handleGitRebase,
+	})
 }
 
 func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
