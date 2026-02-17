@@ -5,31 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/amarbel-llc/go-lib-mcp/protocol"
-	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
-func registerCommitTools(r *server.ToolRegistry) {
-	r.Register(
-		"commit",
-		"Create a new commit with staged changes",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"message": {
-					"type": "string",
-					"description": "Commit message"
-				}
-			},
-			"required": ["repo_path", "message"]
-		}`),
-		handleGitCommit,
-	)
+func registerCommitCommands(app *command.App) {
+	app.AddCommand(&command.Command{
+		Name:        "commit",
+		Description: "Create a new commit with staged changes",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "message", Type: command.String, Description: "Commit message", Required: true},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git commit"}, UseWhen: "creating a new commit"},
+		},
+		RunMCP: handleGitCommit,
+	})
 }
 
 func handleGitCommit(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
