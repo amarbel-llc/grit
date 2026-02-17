@@ -5,83 +5,50 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/amarbel-llc/go-lib-mcp/protocol"
-	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
-func registerBranchTools(r *server.ToolRegistry) {
-	r.Register(
-		"branch_list",
-		"List branches",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"remote": {
-					"type": "boolean",
-					"description": "List remote-tracking branches"
-				},
-				"all": {
-					"type": "boolean",
-					"description": "List both local and remote-tracking branches"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitBranchList,
-	)
+func registerBranchCommands(app *command.App) {
+	app.AddCommand(&command.Command{
+		Name:        "branch_list",
+		Description: "List branches",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "remote", Type: command.Bool, Description: "List remote-tracking branches"},
+			{Name: "all", Type: command.Bool, Description: "List both local and remote-tracking branches"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git branch"}, UseWhen: "listing branches"},
+		},
+		RunMCP: handleGitBranchList,
+	})
 
-	r.Register(
-		"branch_create",
-		"Create a new branch",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"name": {
-					"type": "string",
-					"description": "Name for the new branch"
-				},
-				"start_point": {
-					"type": "string",
-					"description": "Starting point for the new branch (commit, branch, tag)"
-				}
-			},
-			"required": ["repo_path", "name"]
-		}`),
-		handleGitBranchCreate,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "branch_create",
+		Description: "Create a new branch",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "name", Type: command.String, Description: "Name for the new branch", Required: true},
+			{Name: "start_point", Type: command.String, Description: "Starting point for the new branch (commit, branch, tag)"},
+		},
+		RunMCP: handleGitBranchCreate,
+	})
 
-	r.Register(
-		"checkout",
-		"Switch branches or restore working tree files",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"ref": {
-					"type": "string",
-					"description": "Branch name or ref to check out"
-				},
-				"create": {
-					"type": "boolean",
-					"description": "Create a new branch and check it out (-b)"
-				}
-			},
-			"required": ["repo_path", "ref"]
-		}`),
-		handleGitCheckout,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "checkout",
+		Description: "Switch branches or restore working tree files",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "ref", Type: command.String, Description: "Branch name or ref to check out", Required: true},
+			{Name: "create", Type: command.Bool, Description: "Create a new branch and check it out (-b)"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git checkout", "git switch"}, UseWhen: "switching branches"},
+		},
+		RunMCP: handleGitCheckout,
+	})
 }
 
 func handleGitBranchList(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
