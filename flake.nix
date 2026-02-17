@@ -38,7 +38,7 @@
           subPackages = [ "cmd/grit" ];
 
           postInstall = ''
-            $out/bin/grit generate-plugin $out/share/purse-first
+            $out/bin/grit generate-plugin $out
           '';
 
           meta = with pkgs.lib; {
