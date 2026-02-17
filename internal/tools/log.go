@@ -5,100 +5,57 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/amarbel-llc/go-lib-mcp/protocol"
-	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
-func registerLogTools(r *server.ToolRegistry) {
-	r.Register(
-		"log",
-		"Show commit history as structured JSON",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"max_count": {
-					"type": "integer",
-					"description": "Maximum number of commits to show (default 10)"
-				},
-				"ref": {
-					"type": "string",
-					"description": "Starting ref (commit, branch, tag)"
-				},
-				"paths": {
-					"type": "array",
-					"items": {"type": "string"},
-					"description": "Limit to commits affecting these paths"
-				},
-				"all": {
-					"type": "boolean",
-					"description": "Show commits from all branches"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitLog,
-	)
+func registerLogCommands(app *command.App) {
+	app.AddCommand(&command.Command{
+		Name:        "log",
+		Description: "Show commit history as structured JSON",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "max_count", Type: command.Int, Description: "Maximum number of commits to show (default 10)"},
+			{Name: "ref", Type: command.String, Description: "Starting ref (commit, branch, tag)"},
+			{Name: "paths", Type: command.Array, Description: "Limit to commits affecting these paths"},
+			{Name: "all", Type: command.Bool, Description: "Show commits from all branches"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git log"}, UseWhen: "viewing commit history"},
+		},
+		RunMCP: handleGitLog,
+	})
 
-	r.Register(
-		"show",
-		"Show a commit, tag, or other git object",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"ref": {
-					"type": "string",
-					"description": "Ref to show (commit hash, tag, branch, etc.)"
-				},
-				"context_lines": {
-					"type": "integer",
-					"description": "Number of context lines around each change (git --unified=N, default 3)"
-				},
-				"max_patch_lines": {
-					"type": "integer",
-					"description": "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."
-				}
-			},
-			"required": ["repo_path", "ref"]
-		}`),
-		handleGitShow,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "show",
+		Description: "Show a commit, tag, or other git object",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "ref", Type: command.String, Description: "Ref to show (commit hash, tag, branch, etc.)", Required: true},
+			{Name: "context_lines", Type: command.Int, Description: "Number of context lines around each change (git --unified=N, default 3)"},
+			{Name: "max_patch_lines", Type: command.Int, Description: "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git show"}, UseWhen: "inspecting commits or objects"},
+		},
+		RunMCP: handleGitShow,
+	})
 
-	r.Register(
-		"blame",
-		"Show line-by-line authorship of a file",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"path": {
-					"type": "string",
-					"description": "File path to blame (relative to repo root)"
-				},
-				"ref": {
-					"type": "string",
-					"description": "Blame at a specific ref"
-				},
-				"line_range": {
-					"type": "string",
-					"description": "Line range in format START,END (e.g. '10,20')"
-				}
-			},
-			"required": ["repo_path", "path"]
-		}`),
-		handleGitBlame,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "blame",
+		Description: "Show line-by-line authorship of a file",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "path", Type: command.String, Description: "File path to blame (relative to repo root)", Required: true},
+			{Name: "ref", Type: command.String, Description: "Blame at a specific ref"},
+			{Name: "line_range", Type: command.String, Description: "Line range in format START,END (e.g. '10,20')"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git blame"}, UseWhen: "viewing line-by-line authorship"},
+		},
+		RunMCP: handleGitBlame,
+	})
 }
 
 func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
