@@ -6,115 +6,69 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amarbel-llc/go-lib-mcp/protocol"
-	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
-func registerRemoteTools(r *server.ToolRegistry) {
-	r.Register(
-		"fetch",
-		"Fetch from a remote repository",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"remote": {
-					"type": "string",
-					"description": "Remote name (default origin)"
-				},
-				"prune": {
-					"type": "boolean",
-					"description": "Prune remote-tracking branches no longer on remote"
-				},
-				"all": {
-					"type": "boolean",
-					"description": "Fetch from all remotes"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitFetch,
-	)
+func registerRemoteCommands(app *command.App) {
+	app.AddCommand(&command.Command{
+		Name:        "fetch",
+		Description: "Fetch from a remote repository",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "remote", Type: command.String, Description: "Remote name (default origin)"},
+			{Name: "prune", Type: command.Bool, Description: "Prune remote-tracking branches no longer on remote"},
+			{Name: "all", Type: command.Bool, Description: "Fetch from all remotes"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git fetch"}, UseWhen: "fetching from a remote"},
+		},
+		RunMCP: handleGitFetch,
+	})
 
-	r.Register(
-		"pull",
-		"Pull changes from a remote repository",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"remote": {
-					"type": "string",
-					"description": "Remote name (default origin)"
-				},
-				"branch": {
-					"type": "string",
-					"description": "Remote branch to pull"
-				},
-				"rebase": {
-					"type": "boolean",
-					"description": "Rebase instead of merge"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitPull,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "pull",
+		Description: "Pull changes from a remote repository",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "remote", Type: command.String, Description: "Remote name (default origin)"},
+			{Name: "branch", Type: command.String, Description: "Remote branch to pull"},
+			{Name: "rebase", Type: command.Bool, Description: "Rebase instead of merge"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git pull"}, UseWhen: "pulling changes from a remote"},
+		},
+		RunMCP: handleGitPull,
+	})
 
-	r.Register(
-		"push",
-		"Push commits to a remote repository (force push blocked on main/master)",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"remote": {
-					"type": "string",
-					"description": "Remote name (default origin)"
-				},
-				"branch": {
-					"type": "string",
-					"description": "Branch to push"
-				},
-				"set_upstream": {
-					"type": "boolean",
-					"description": "Set upstream tracking reference (-u)"
-				},
-				"force": {
-					"type": "boolean",
-					"description": "Force push (blocked on main/master branches)"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitPush,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "push",
+		Description: "Push commits to a remote repository (force push blocked on main/master)",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "remote", Type: command.String, Description: "Remote name (default origin)"},
+			{Name: "branch", Type: command.String, Description: "Branch to push"},
+			{Name: "set_upstream", Type: command.Bool, Description: "Set upstream tracking reference (-u)"},
+			{Name: "force", Type: command.Bool, Description: "Force push (blocked on main/master branches)"},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git push"}, UseWhen: "pushing commits to a remote"},
+		},
+		RunMCP: handleGitPush,
+	})
 
-	r.Register(
-		"remote_list",
-		"List remotes with their URLs",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitRemoteList,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "remote_list",
+		Description: "List remotes with their URLs",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git remote"}, UseWhen: "listing remotes"},
+		},
+		RunMCP: handleGitRemoteList,
+	})
 }
 
 func handleGitFetch(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
