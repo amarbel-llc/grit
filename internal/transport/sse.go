@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/amarbel-llc/go-lib-mcp/jsonrpc"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/jsonrpc"
 )
 
 // SSE implements the MCP SSE transport over HTTP.
