@@ -1,18 +1,19 @@
 package tools
 
-import "github.com/amarbel-llc/go-lib-mcp/server"
+import "github.com/amarbel-llc/purse-first/libs/go-mcp/command"
 
-func RegisterAll() *server.ToolRegistry {
-	r := server.NewToolRegistry()
+func RegisterAll() *command.App {
+	app := command.NewApp("grit", "MCP server exposing git operations")
+	app.Version = "0.1.0"
 
-	registerStatusTools(r)
-	registerLogTools(r)
-	registerStagingTools(r)
-	registerCommitTools(r)
-	registerBranchTools(r)
-	registerRemoteTools(r)
-	registerRevParseTools(r)
-	registerRebaseTools(r)
+	registerStatusCommands(app)
+	registerLogCommands(app)
+	registerStagingCommands(app)
+	registerCommitCommands(app)
+	registerBranchCommands(app)
+	registerRemoteCommands(app)
+	registerRevParseCommands(app)
+	registerRebaseCommands(app)
 
-	return r
+	return app
 }
