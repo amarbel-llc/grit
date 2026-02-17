@@ -5,68 +5,41 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/amarbel-llc/go-lib-mcp/protocol"
-	"github.com/amarbel-llc/go-lib-mcp/server"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
-func registerStatusTools(r *server.ToolRegistry) {
-	r.Register(
-		"status",
-		"Show working tree status with machine-readable output",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitStatus,
-	)
+func registerStatusCommands(app *command.App) {
+	app.AddCommand(&command.Command{
+		Name:        "status",
+		Description: "Show working tree status with machine-readable output",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git status"}, UseWhen: "checking repository status"},
+		},
+		RunMCP: handleGitStatus,
+	})
 
-	r.Register(
-		"diff",
-		"Show changes in the working tree or between commits",
-		json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"repo_path": {
-					"type": "string",
-					"description": "Path to the git repository"
-				},
-				"staged": {
-					"type": "boolean",
-					"description": "Show staged changes (--cached)"
-				},
-				"ref": {
-					"type": "string",
-					"description": "Diff against a specific ref (commit, branch, tag)"
-				},
-				"paths": {
-					"type": "array",
-					"items": {"type": "string"},
-					"description": "Limit diff to specific paths"
-				},
-				"stat_only": {
-					"type": "boolean",
-					"description": "Show only diffstat summary"
-				},
-				"context_lines": {
-					"type": "integer",
-					"description": "Number of context lines around each change (git --unified=N, default 3)"
-				},
-				"max_patch_lines": {
-					"type": "integer",
-					"description": "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."
-				}
-			},
-			"required": ["repo_path"]
-		}`),
-		handleGitDiff,
-	)
+	app.AddCommand(&command.Command{
+		Name:        "diff",
+		Description: "Show changes in the working tree or between commits",
+		Params: []command.Param{
+			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
+			{Name: "staged", Type: command.Bool, Description: "Show staged changes (--cached)"},
+			{Name: "ref", Type: command.String, Description: "Diff against a specific ref (commit, branch, tag)"},
+			{Name: "paths", Type: command.Array, Description: "Limit diff to specific paths"},
+			{Name: "stat_only", Type: command.Bool, Description: "Show only diffstat summary"},
+			{Name: "context_lines", Type: command.Int, Description: "Number of context lines around each change (git --unified=N, default 3)"},
+			{Name: "max_patch_lines", Type: command.Int, Description: "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."},
+		},
+		MapsBash: []command.BashMapping{
+			{Prefixes: []string{"git diff"}, UseWhen: "viewing changes"},
+		},
+		RunMCP: handleGitDiff,
+	})
 }
 
 func handleGitStatus(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
