@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
@@ -130,8 +132,12 @@ func handleGitRebase(ctx context.Context, args json.RawMessage, _ command.Prompt
 		}
 
 		// Check for existing rebase state
-		rebaseDir := ".git/rebase-merge"
-		if _, err := git.Run(ctx, params.RepoPath, "test", "-d", rebaseDir); err == nil {
+		rebaseMergeDir := filepath.Join(params.RepoPath, ".git", "rebase-merge")
+		rebaseApplyDir := filepath.Join(params.RepoPath, ".git", "rebase-apply")
+		if _, err := os.Stat(rebaseMergeDir); err == nil {
+			return command.TextErrorResult("a rebase operation is already in progress; use continue, abort, or skip"), nil
+		}
+		if _, err := os.Stat(rebaseApplyDir); err == nil {
 			return command.TextErrorResult("a rebase operation is already in progress; use continue, abort, or skip"), nil
 		}
 
