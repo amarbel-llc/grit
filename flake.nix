@@ -7,6 +7,7 @@
     utils.url = "https://flakehub.com/f/numtide/flake-utils/0.1.102";
     go.url = "github:friedenberg/eng?dir=devenvs/go";
     shell.url = "github:friedenberg/eng?dir=devenvs/shell";
+    batman.url = "github:amarbel-llc/batman";
   };
 
   outputs =
@@ -17,6 +18,7 @@
       go,
       shell,
       nixpkgs-master,
+      batman,
     }:
     utils.lib.eachDefaultSystem (
       system:
@@ -55,8 +57,12 @@
         };
 
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
+          packages = (with pkgs; [
             just
+            jq
+          ]) ++ [
+            batman.packages.${system}.bats
+            batman.packages.${system}.bats-libs
           ];
 
           inputsFrom = [
