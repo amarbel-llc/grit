@@ -42,3 +42,10 @@ install-claude: build
 clean:
     rm -f grit
     rm -rf result
+
+# Run BATS integration tests
+test-bats: build
+    just zz-tests_bats/test
+
+# Run all tests (Go + BATS)
+test-all: test test-bats
