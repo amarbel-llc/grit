@@ -23,6 +23,7 @@ setup_test_home() {
   git config --global user.name "Test User"
   git config --global user.email "test@example.com"
   git config --global init.defaultBranch main
+  export GIT_EDITOR=true
 }
 
 chflags_and_rm() {
