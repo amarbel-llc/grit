@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -24,7 +23,7 @@ func registerRemoteCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git fetch"}, UseWhen: "fetching from a remote"},
 		},
-		RunMCP: handleGitFetch,
+		Run: handleGitFetch,
 	})
 
 	app.AddCommand(&command.Command{
@@ -39,7 +38,7 @@ func registerRemoteCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git pull"}, UseWhen: "pulling changes from a remote"},
 		},
-		RunMCP: handleGitPull,
+		Run: handleGitPull,
 	})
 
 	app.AddCommand(&command.Command{
@@ -55,7 +54,7 @@ func registerRemoteCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git push"}, UseWhen: "pushing commits to a remote"},
 		},
-		RunMCP: handleGitPush,
+		Run: handleGitPush,
 	})
 
 	app.AddCommand(&command.Command{
@@ -67,11 +66,11 @@ func registerRemoteCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git remote"}, UseWhen: "listing remotes"},
 		},
-		RunMCP: handleGitRemoteList,
+		Run: handleGitRemoteList,
 	})
 }
 
-func handleGitFetch(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitFetch(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 		Remote   string `json:"remote"`
@@ -80,7 +79,7 @@ func handleGitFetch(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"fetch"}
@@ -96,7 +95,7 @@ func handleGitFetch(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 	}
 
 	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git fetch: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git fetch: %v", err)), nil
 	}
 
 	remote := params.Remote
@@ -104,15 +103,15 @@ func handleGitFetch(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 		remote = "origin"
 	}
 
-	return jsonResult(git.MutationResult{
+	return command.JSONResult(git.MutationResult{
 		Status: "fetched",
 		Remote: remote,
 		All:    params.All,
 		Prune:  params.Prune,
-	})
+	}), nil
 }
 
-func handleGitPull(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitPull(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 		Remote   string `json:"remote"`
@@ -121,7 +120,7 @@ func handleGitPull(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"pull"}
@@ -140,7 +139,7 @@ func handleGitPull(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 
 	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git pull: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git pull: %v", err)), nil
 	}
 
 	result := git.PullResult{
@@ -153,10 +152,10 @@ func handleGitPull(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		result.Summary = ""
 	}
 
-	return jsonResult(result)
+	return command.JSONResult(result), nil
 }
 
-func handleGitPush(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitPush(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath    string `json:"repo_path"`
 		Remote      string `json:"remote"`
@@ -166,7 +165,7 @@ func handleGitPush(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	if params.Force {
@@ -180,7 +179,7 @@ func handleGitPush(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		}
 
 		if branch == "main" || branch == "master" {
-			return protocol.ErrorResult("force push to main/master is blocked for safety"), nil
+			return command.TextErrorResult("force push to main/master is blocked for safety"), nil
 		}
 	}
 
@@ -203,33 +202,33 @@ func handleGitPush(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 	}
 
 	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git push: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git push: %v", err)), nil
 	}
 
-	return jsonResult(git.MutationResult{
+	return command.JSONResult(git.MutationResult{
 		Status:      "pushed",
 		Remote:      params.Remote,
 		Branch:      params.Branch,
 		SetUpstream: params.SetUpstream,
 		Force:       params.Force,
-	})
+	}), nil
 }
 
-func handleGitRemoteList(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitRemoteList(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	out, err := git.Run(ctx, params.RepoPath, "remote", "-v")
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git remote: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git remote: %v", err)), nil
 	}
 
 	remotes := git.ParseRemoteList(out)
 
-	return jsonResult(remotes)
+	return command.JSONResult(remotes), nil
 }

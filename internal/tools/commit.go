@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -21,26 +20,26 @@ func registerCommitCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git commit"}, UseWhen: "creating a new commit"},
 		},
-		RunMCP: handleGitCommit,
+		Run: handleGitCommit,
 	})
 }
 
-func handleGitCommit(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitCommit(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 		Message  string `json:"message"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	out, err := git.Run(ctx, params.RepoPath, "commit", "-m", params.Message)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git commit: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git commit: %v", err)), nil
 	}
 
 	result := git.ParseCommit(out)
 
-	return jsonResult(result)
+	return command.JSONResult(result), nil
 }

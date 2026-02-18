@@ -2,5 +2,5 @@ schema = 3
 
 [mod]
   [mod.'github.com/amarbel-llc/purse-first/libs/go-mcp']
-    version = 'v0.0.0-20260217222858-cd512e5ef8b7'
-    hash = 'sha256-S7j8n/4sc6fDWFBnpbNJqfx4LgN+X0fT4eaTT2Ex2DY='
+    version = 'v0.0.1'
+    hash = 'sha256-7zyqx9LxfjKyOZ28GIfwKut39n73PW60Ekm8+APL9Bw='

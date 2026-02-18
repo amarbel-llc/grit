@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -24,7 +23,7 @@ func registerLogCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git log"}, UseWhen: "viewing commit history"},
 		},
-		RunMCP: handleGitLog,
+		Run: handleGitLog,
 	})
 
 	app.AddCommand(&command.Command{
@@ -39,7 +38,7 @@ func registerLogCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git show"}, UseWhen: "inspecting commits or objects"},
 		},
-		RunMCP: handleGitShow,
+		Run: handleGitShow,
 	})
 
 	app.AddCommand(&command.Command{
@@ -54,11 +53,11 @@ func registerLogCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git blame"}, UseWhen: "viewing line-by-line authorship"},
 		},
-		RunMCP: handleGitBlame,
+		Run: handleGitBlame,
 	})
 }
 
-func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitLog(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string   `json:"repo_path"`
 		MaxCount int      `json:"max_count"`
@@ -68,7 +67,7 @@ func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCall
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"log"}
@@ -95,15 +94,15 @@ func handleGitLog(ctx context.Context, args json.RawMessage) (*protocol.ToolCall
 
 	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git log: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git log: %v", err)), nil
 	}
 
 	entries := git.ParseLog(out)
 
-	return jsonResult(entries)
+	return command.JSONResult(entries), nil
 }
 
-func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitShow(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath      string `json:"repo_path"`
 		Ref           string `json:"ref"`
@@ -112,7 +111,7 @@ func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	metadataOut, err := git.Run(ctx, params.RepoPath, "show", "--no-patch", fmt.Sprintf("--format=%s", git.ShowFormat), params.Ref)
@@ -120,13 +119,9 @@ func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		// Fall back to raw output for non-commit objects (tags, blobs)
 		out, fallbackErr := git.Run(ctx, params.RepoPath, "show", params.Ref)
 		if fallbackErr != nil {
-			return protocol.ErrorResult(fmt.Sprintf("git show: %v", err)), nil
+			return command.TextErrorResult(fmt.Sprintf("git show: %v", err)), nil
 		}
-		return &protocol.ToolCallResult{
-			Content: []protocol.ContentBlock{
-				protocol.TextContent(out),
-			},
-		}, nil
+		return command.TextResult(out), nil
 	}
 
 	numstatOut, err := git.Run(ctx, params.RepoPath, "show", "--numstat", "--format=", params.Ref)
@@ -152,10 +147,10 @@ func handleGitShow(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 	result.Truncated = truncated
 	result.TruncatedAtLine = truncatedAt
 
-	return jsonResult(result)
+	return command.JSONResult(result), nil
 }
 
-func handleGitBlame(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitBlame(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath  string `json:"repo_path"`
 		Path      string `json:"path"`
@@ -164,7 +159,7 @@ func handleGitBlame(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"blame", "--porcelain"}
@@ -181,10 +176,10 @@ func handleGitBlame(ctx context.Context, args json.RawMessage) (*protocol.ToolCa
 
 	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git blame: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git blame: %v", err)), nil
 	}
 
 	lines := git.ParseBlame(out)
 
-	return jsonResult(lines)
+	return command.JSONResult(lines), nil
 }

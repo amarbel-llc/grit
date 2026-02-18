@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -21,7 +20,7 @@ func registerStagingCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git add"}, UseWhen: "staging files for commit"},
 		},
-		RunMCP: handleGitAdd,
+		Run: handleGitAdd,
 	})
 
 	app.AddCommand(&command.Command{
@@ -34,52 +33,52 @@ func registerStagingCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git reset"}, UseWhen: "unstaging files"},
 		},
-		RunMCP: handleGitReset,
+		Run: handleGitReset,
 	})
 }
 
-func handleGitAdd(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitAdd(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string   `json:"repo_path"`
 		Paths    []string `json:"paths"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"add", "--"}
 	gitArgs = append(gitArgs, params.Paths...)
 
 	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git add: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git add: %v", err)), nil
 	}
 
-	return jsonResult(git.MutationResult{
+	return command.JSONResult(git.MutationResult{
 		Status: "staged",
 		Paths:  params.Paths,
-	})
+	}), nil
 }
 
-func handleGitReset(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitReset(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string   `json:"repo_path"`
 		Paths    []string `json:"paths"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"reset", "HEAD", "--"}
 	gitArgs = append(gitArgs, params.Paths...)
 
 	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git reset: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git reset: %v", err)), nil
 	}
 
-	return jsonResult(git.MutationResult{
+	return command.JSONResult(git.MutationResult{
 		Status: "unstaged",
 		Paths:  params.Paths,
-	})
+	}), nil
 }

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -27,11 +26,11 @@ func registerRebaseCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git rebase"}, UseWhen: "rebasing a branch"},
 		},
-		RunMCP: handleGitRebase,
+		Run: handleGitRebase,
 	})
 }
 
-func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitRebase(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath  string `json:"repo_path"`
 		Upstream  string `json:"upstream"`
@@ -43,7 +42,7 @@ func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	// Validate mutually exclusive operations
@@ -62,22 +61,22 @@ func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 	}
 
 	if opCount > 1 {
-		return protocol.ErrorResult("only one of upstream, continue, abort, or skip can be specified"), nil
+		return command.TextErrorResult("only one of upstream, continue, abort, or skip can be specified"), nil
 	}
 
 	if opCount == 0 {
-		return protocol.ErrorResult("must specify upstream (for new rebase) or continue/abort/skip (for existing rebase)"), nil
+		return command.TextErrorResult("must specify upstream (for new rebase) or continue/abort/skip (for existing rebase)"), nil
 	}
 
 	// Handle abort
 	if params.Abort {
 		if _, err := git.Run(ctx, params.RepoPath, "rebase", "--abort"); err != nil {
-			return protocol.ErrorResult(fmt.Sprintf("git rebase --abort: %v", err)), nil
+			return command.TextErrorResult(fmt.Sprintf("git rebase --abort: %v", err)), nil
 		}
 
-		return jsonResult(git.RebaseResult{
+		return command.JSONResult(git.RebaseResult{
 			Status: "aborted",
-		})
+		}), nil
 	}
 
 	// Handle continue
@@ -87,31 +86,31 @@ func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 			// Check if there are still conflicts
 			if strings.Contains(err.Error(), "fix conflicts") || strings.Contains(err.Error(), "still have conflicts") {
 				conflicts := extractConflictFiles(ctx, params.RepoPath)
-				return jsonResult(git.RebaseResult{
+				return command.JSONResult(git.RebaseResult{
 					Status:    "conflict",
 					Conflicts: conflicts,
-				})
+				}), nil
 			}
-			return protocol.ErrorResult(fmt.Sprintf("git rebase --continue: %v", err)), nil
+			return command.TextErrorResult(fmt.Sprintf("git rebase --continue: %v", err)), nil
 		}
 
-		return jsonResult(git.RebaseResult{
+		return command.JSONResult(git.RebaseResult{
 			Status:  "completed",
 			Summary: strings.TrimSpace(out),
-		})
+		}), nil
 	}
 
 	// Handle skip
 	if params.Skip {
 		out, err := git.Run(ctx, params.RepoPath, "rebase", "--skip")
 		if err != nil {
-			return protocol.ErrorResult(fmt.Sprintf("git rebase --skip: %v", err)), nil
+			return command.TextErrorResult(fmt.Sprintf("git rebase --skip: %v", err)), nil
 		}
 
-		return jsonResult(git.RebaseResult{
+		return command.JSONResult(git.RebaseResult{
 			Status:  "skipped",
 			Summary: strings.TrimSpace(out),
-		})
+		}), nil
 	}
 
 	// Handle new rebase
@@ -127,13 +126,13 @@ func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 
 		// Safety: block rebasing main/master
 		if branchToRebase == "main" || branchToRebase == "master" {
-			return protocol.ErrorResult("rebasing main/master is blocked for safety"), nil
+			return command.TextErrorResult("rebasing main/master is blocked for safety"), nil
 		}
 
 		// Check for existing rebase state
 		rebaseDir := ".git/rebase-merge"
 		if _, err := git.Run(ctx, params.RepoPath, "test", "-d", rebaseDir); err == nil {
-			return protocol.ErrorResult("a rebase operation is already in progress; use continue, abort, or skip"), nil
+			return command.TextErrorResult("a rebase operation is already in progress; use continue, abort, or skip"), nil
 		}
 
 		gitArgs := []string{"rebase"}
@@ -153,14 +152,14 @@ func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 			// Check for conflicts
 			if strings.Contains(err.Error(), "CONFLICT") || strings.Contains(err.Error(), "could not apply") {
 				conflicts := extractConflictFiles(ctx, params.RepoPath)
-				return jsonResult(git.RebaseResult{
+				return command.JSONResult(git.RebaseResult{
 					Status:    "conflict",
 					Branch:    branchToRebase,
 					Upstream:  params.Upstream,
 					Conflicts: conflicts,
-				})
+				}), nil
 			}
-			return protocol.ErrorResult(fmt.Sprintf("git rebase: %v", err)), nil
+			return command.TextErrorResult(fmt.Sprintf("git rebase: %v", err)), nil
 		}
 
 		result := git.RebaseResult{
@@ -175,10 +174,10 @@ func handleGitRebase(ctx context.Context, args json.RawMessage) (*protocol.ToolC
 			result.Summary = ""
 		}
 
-		return jsonResult(result)
+		return command.JSONResult(result), nil
 	}
 
-	return protocol.ErrorResult("unexpected state: no operation specified"), nil
+	return command.TextErrorResult("unexpected state: no operation specified"), nil
 }
 
 func extractConflictFiles(ctx context.Context, repoPath string) []string {

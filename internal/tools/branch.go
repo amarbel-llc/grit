@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -22,7 +21,7 @@ func registerBranchCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git branch"}, UseWhen: "listing branches"},
 		},
-		RunMCP: handleGitBranchList,
+		Run: handleGitBranchList,
 	})
 
 	app.AddCommand(&command.Command{
@@ -33,7 +32,7 @@ func registerBranchCommands(app *command.App) {
 			{Name: "name", Type: command.String, Description: "Name for the new branch", Required: true},
 			{Name: "start_point", Type: command.String, Description: "Starting point for the new branch (commit, branch, tag)"},
 		},
-		RunMCP: handleGitBranchCreate,
+		Run: handleGitBranchCreate,
 	})
 
 	app.AddCommand(&command.Command{
@@ -47,11 +46,11 @@ func registerBranchCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git checkout", "git switch"}, UseWhen: "switching branches"},
 		},
-		RunMCP: handleGitCheckout,
+		Run: handleGitCheckout,
 	})
 }
 
-func handleGitBranchList(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitBranchList(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 		Remote   bool   `json:"remote"`
@@ -59,7 +58,7 @@ func handleGitBranchList(ctx context.Context, args json.RawMessage) (*protocol.T
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{
@@ -75,15 +74,15 @@ func handleGitBranchList(ctx context.Context, args json.RawMessage) (*protocol.T
 
 	out, err := git.Run(ctx, params.RepoPath, gitArgs...)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git branch: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git branch: %v", err)), nil
 	}
 
 	branches := git.ParseBranchList(out)
 
-	return jsonResult(branches)
+	return command.JSONResult(branches), nil
 }
 
-func handleGitBranchCreate(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitBranchCreate(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath   string `json:"repo_path"`
 		Name       string `json:"name"`
@@ -91,7 +90,7 @@ func handleGitBranchCreate(ctx context.Context, args json.RawMessage) (*protocol
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"branch", params.Name}
@@ -101,17 +100,17 @@ func handleGitBranchCreate(ctx context.Context, args json.RawMessage) (*protocol
 	}
 
 	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git branch create: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git branch create: %v", err)), nil
 	}
 
-	return jsonResult(git.MutationResult{
+	return command.JSONResult(git.MutationResult{
 		Status:     "created",
 		Name:       params.Name,
 		StartPoint: params.StartPoint,
-	})
+	}), nil
 }
 
-func handleGitCheckout(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitCheckout(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 		Ref      string `json:"ref"`
@@ -119,7 +118,7 @@ func handleGitCheckout(ctx context.Context, args json.RawMessage) (*protocol.Too
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	gitArgs := []string{"checkout"}
@@ -131,12 +130,12 @@ func handleGitCheckout(ctx context.Context, args json.RawMessage) (*protocol.Too
 	gitArgs = append(gitArgs, params.Ref)
 
 	if _, err := git.Run(ctx, params.RepoPath, gitArgs...); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git checkout: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git checkout: %v", err)), nil
 	}
 
-	return jsonResult(git.MutationResult{
+	return command.JSONResult(git.MutationResult{
 		Status: "switched",
 		Ref:    params.Ref,
 		Create: params.Create,
-	})
+	}), nil
 }

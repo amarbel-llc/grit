@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -22,27 +21,27 @@ func registerRevParseCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git rev-parse"}, UseWhen: "resolving a git revision to its full SHA"},
 		},
-		RunMCP: handleGitRevParse,
+		Run: handleGitRevParse,
 	})
 }
 
-func handleGitRevParse(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitRevParse(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 		Ref      string `json:"ref"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	out, err := git.Run(ctx, params.RepoPath, "rev-parse", "--verify", params.Ref)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git rev-parse: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git rev-parse: %v", err)), nil
 	}
 
-	return jsonResult(git.RevParseResult{
+	return command.JSONResult(git.RevParseResult{
 		Resolved: strings.TrimSpace(out),
 		Ref:      params.Ref,
-	})
+	}), nil
 }

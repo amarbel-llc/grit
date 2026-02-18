@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/amarbel-llc/purse-first/libs/go-mcp/command"
-	"github.com/amarbel-llc/purse-first/libs/go-mcp/protocol"
 	"github.com/friedenberg/grit/internal/git"
 )
 
@@ -20,7 +19,7 @@ func registerStatusCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git status"}, UseWhen: "checking repository status"},
 		},
-		RunMCP: handleGitStatus,
+		Run: handleGitStatus,
 	})
 
 	app.AddCommand(&command.Command{
@@ -38,30 +37,30 @@ func registerStatusCommands(app *command.App) {
 		MapsTools: []command.ToolMapping{
 			{Replaces: "Bash", CommandPrefixes: []string{"git diff"}, UseWhen: "viewing changes"},
 		},
-		RunMCP: handleGitDiff,
+		Run: handleGitDiff,
 	})
 }
 
-func handleGitStatus(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitStatus(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath string `json:"repo_path"`
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	out, err := git.Run(ctx, params.RepoPath, "status", "--porcelain=v2", "--branch")
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git status: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git status: %v", err)), nil
 	}
 
 	result := git.ParseStatus(out)
 
-	return jsonResult(result)
+	return command.JSONResult(result), nil
 }
 
-func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCallResult, error) {
+func handleGitDiff(ctx context.Context, args json.RawMessage, _ command.Prompter) (*command.Result, error) {
 	var params struct {
 		RepoPath      string   `json:"repo_path"`
 		Staged        bool     `json:"staged"`
@@ -73,7 +72,7 @@ func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 	}
 
 	if err := json.Unmarshal(args, &params); err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("invalid arguments: %v", err)), nil
 	}
 
 	numstatArgs := []string{"diff", "--numstat"}
@@ -90,7 +89,7 @@ func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 
 	numstatOut, err := git.Run(ctx, params.RepoPath, numstatArgs...)
 	if err != nil {
-		return protocol.ErrorResult(fmt.Sprintf("git diff: %v", err)), nil
+		return command.TextErrorResult(fmt.Sprintf("git diff: %v", err)), nil
 	}
 
 	stats := git.ParseDiffNumstat(numstatOut)
@@ -125,7 +124,7 @@ func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 
 		patchOut, err := git.Run(ctx, params.RepoPath, patchArgs...)
 		if err != nil {
-			return protocol.ErrorResult(fmt.Sprintf("git diff: %v", err)), nil
+			return command.TextErrorResult(fmt.Sprintf("git diff: %v", err)), nil
 		}
 
 		patch, truncated, truncatedAt := git.TruncatePatch(patchOut, params.MaxPatchLines)
@@ -134,5 +133,5 @@ func handleGitDiff(ctx context.Context, args json.RawMessage) (*protocol.ToolCal
 		result.TruncatedAtLine = truncatedAt
 	}
 
-	return jsonResult(result)
+	return command.JSONResult(result), nil
 }
