@@ -24,8 +24,8 @@ func registerRebaseCommands(app *command.App) {
 			{Name: "abort", Type: command.Bool, Description: "Abort current rebase operation"},
 			{Name: "skip", Type: command.Bool, Description: "Skip current commit and continue rebase"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git rebase"}, UseWhen: "rebasing a branch"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git rebase"}, UseWhen: "rebasing a branch"},
 		},
 		RunMCP: handleGitRebase,
 	})

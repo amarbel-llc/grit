@@ -18,8 +18,8 @@ func registerCommitCommands(app *command.App) {
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "message", Type: command.String, Description: "Commit message", Required: true},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git commit"}, UseWhen: "creating a new commit"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git commit"}, UseWhen: "creating a new commit"},
 		},
 		RunMCP: handleGitCommit,
 	})

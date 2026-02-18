@@ -18,8 +18,8 @@ func registerStagingCommands(app *command.App) {
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "paths", Type: command.Array, Description: "File paths to stage (relative to repo root)", Required: true},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git add"}, UseWhen: "staging files for commit"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git add"}, UseWhen: "staging files for commit"},
 		},
 		RunMCP: handleGitAdd,
 	})
@@ -31,8 +31,8 @@ func registerStagingCommands(app *command.App) {
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 			{Name: "paths", Type: command.Array, Description: "File paths to unstage (relative to repo root)", Required: true},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git reset"}, UseWhen: "unstaging files"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git reset"}, UseWhen: "unstaging files"},
 		},
 		RunMCP: handleGitReset,
 	})

@@ -21,8 +21,8 @@ func registerLogCommands(app *command.App) {
 			{Name: "paths", Type: command.Array, Description: "Limit to commits affecting these paths"},
 			{Name: "all", Type: command.Bool, Description: "Show commits from all branches"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git log"}, UseWhen: "viewing commit history"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git log"}, UseWhen: "viewing commit history"},
 		},
 		RunMCP: handleGitLog,
 	})
@@ -36,8 +36,8 @@ func registerLogCommands(app *command.App) {
 			{Name: "context_lines", Type: command.Int, Description: "Number of context lines around each change (git --unified=N, default 3)"},
 			{Name: "max_patch_lines", Type: command.Int, Description: "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git show"}, UseWhen: "inspecting commits or objects"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git show"}, UseWhen: "inspecting commits or objects"},
 		},
 		RunMCP: handleGitShow,
 	})
@@ -51,8 +51,8 @@ func registerLogCommands(app *command.App) {
 			{Name: "ref", Type: command.String, Description: "Blame at a specific ref"},
 			{Name: "line_range", Type: command.String, Description: "Line range in format START,END (e.g. '10,20')"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git blame"}, UseWhen: "viewing line-by-line authorship"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git blame"}, UseWhen: "viewing line-by-line authorship"},
 		},
 		RunMCP: handleGitBlame,
 	})

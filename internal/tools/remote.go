@@ -21,8 +21,8 @@ func registerRemoteCommands(app *command.App) {
 			{Name: "prune", Type: command.Bool, Description: "Prune remote-tracking branches no longer on remote"},
 			{Name: "all", Type: command.Bool, Description: "Fetch from all remotes"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git fetch"}, UseWhen: "fetching from a remote"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git fetch"}, UseWhen: "fetching from a remote"},
 		},
 		RunMCP: handleGitFetch,
 	})
@@ -36,8 +36,8 @@ func registerRemoteCommands(app *command.App) {
 			{Name: "branch", Type: command.String, Description: "Remote branch to pull"},
 			{Name: "rebase", Type: command.Bool, Description: "Rebase instead of merge"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git pull"}, UseWhen: "pulling changes from a remote"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git pull"}, UseWhen: "pulling changes from a remote"},
 		},
 		RunMCP: handleGitPull,
 	})
@@ -52,8 +52,8 @@ func registerRemoteCommands(app *command.App) {
 			{Name: "set_upstream", Type: command.Bool, Description: "Set upstream tracking reference (-u)"},
 			{Name: "force", Type: command.Bool, Description: "Force push (blocked on main/master branches)"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git push"}, UseWhen: "pushing commits to a remote"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git push"}, UseWhen: "pushing commits to a remote"},
 		},
 		RunMCP: handleGitPush,
 	})
@@ -64,8 +64,8 @@ func registerRemoteCommands(app *command.App) {
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git remote"}, UseWhen: "listing remotes"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git remote"}, UseWhen: "listing remotes"},
 		},
 		RunMCP: handleGitRemoteList,
 	})

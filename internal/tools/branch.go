@@ -19,8 +19,8 @@ func registerBranchCommands(app *command.App) {
 			{Name: "remote", Type: command.Bool, Description: "List remote-tracking branches"},
 			{Name: "all", Type: command.Bool, Description: "List both local and remote-tracking branches"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git branch"}, UseWhen: "listing branches"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git branch"}, UseWhen: "listing branches"},
 		},
 		RunMCP: handleGitBranchList,
 	})
@@ -44,8 +44,8 @@ func registerBranchCommands(app *command.App) {
 			{Name: "ref", Type: command.String, Description: "Branch name or ref to check out", Required: true},
 			{Name: "create", Type: command.Bool, Description: "Create a new branch and check it out (-b)"},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git checkout", "git switch"}, UseWhen: "switching branches"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git checkout", "git switch"}, UseWhen: "switching branches"},
 		},
 		RunMCP: handleGitCheckout,
 	})

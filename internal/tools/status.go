@@ -17,8 +17,8 @@ func registerStatusCommands(app *command.App) {
 		Params: []command.Param{
 			{Name: "repo_path", Type: command.String, Description: "Path to the git repository", Required: true},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git status"}, UseWhen: "checking repository status"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git status"}, UseWhen: "checking repository status"},
 		},
 		RunMCP: handleGitStatus,
 	})
@@ -35,8 +35,8 @@ func registerStatusCommands(app *command.App) {
 			{Name: "context_lines", Type: command.Int, Description: "Number of context lines around each change (git --unified=N, default 3)"},
 			{Name: "max_patch_lines", Type: command.Int, Description: "Maximum number of patch output lines. Output is truncated with a truncated flag when exceeded."},
 		},
-		MapsBash: []command.BashMapping{
-			{Prefixes: []string{"git diff"}, UseWhen: "viewing changes"},
+		MapsTools: []command.ToolMapping{
+			{Replaces: "Bash", CommandPrefixes: []string{"git diff"}, UseWhen: "viewing changes"},
 		},
 		RunMCP: handleGitDiff,
 	})
