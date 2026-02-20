@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/amarbel-llc/purse-first/libs/go-mcp/output"
 )
 
 func Run(ctx context.Context, dir string, args ...string) (string, error) {
@@ -32,7 +34,8 @@ func Run(ctx context.Context, dir string, args ...string) (string, error) {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("git %v: %w: %s", args, err, stderr.String())
+		limited := output.LimitStderr(stderr.String())
+		return "", fmt.Errorf("git %v: %w: %s", args, err, limited.Content)
 	}
 
 	return stdout.String(), nil
